@@ -35,8 +35,7 @@ inquirer
             default: 'black'
         },
     ])
-
-    // Chain the promises
+    // Promise chain
     .then (response => {
        let shape;
        if (response.addShape === 'circle') shape= new Circle()
