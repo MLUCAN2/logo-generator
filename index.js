@@ -1,10 +1,9 @@
 // Required items to run the app
 const fs= require('fs');
 const inquirer= require ('inquirer');
-const shapes= require('./shapes.js');
+const {Circle,Triangle,Square} = require('./lib/shapes.js');
+const SVG= require('./lib/svg.js')
 
-
-console.log(Object.keys(shapes));
 // Prompt section for users to generate their logo.
 inquirer
     .prompt([
@@ -26,7 +25,7 @@ inquirer
             type: 'list',
             name: 'addShape',
             message: 'Choose your shape',
-            choices: Object.keys(shapes)
+            choices: ['circle', 'triangle', 'square'],
             
         },
         {
@@ -39,41 +38,21 @@ inquirer
 
     // Chain the promises
     .then (response => {
-        return addSVG(response);
-    })
-    .then (() => {
-        console.log('Created logo.svg')
+       let shape;
+       if (response.addShape === 'circle') shape= new Circle()
+       else if (response.addShape === 'triangle') shape= new Triangle()
+        else shape= new Square()
+
+        shape.setColor(response.addShapeColor)
+        const svg= new SVG()
+        svg.setText(response.characters, response.addTextColor)
+        svg.setShape(shape)
+        fs.writeFile(`dist/logo-${response.addShape}.svg`, svg.render(), err => {
+            if (err) console.log(err)
+            else console.log('logo created')
+        })
     })
     .catch (err=> {
         console.error('Could not create logo.svg', err);
     });
 
-// Generate SVG file
-function addSVG(data){
-    return new Promise((resolve, reject) => {
-        const selectShape= shapes[data.addShape];
-        const svgShapes= 
-            `<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
-            <text x=50% y=50% fill="${data.addTextColor}"/>${data.characters}</text>
-            <${selectShape.type} fill="${data.addShapeColor}" ${selectShape.attributes}></ ${selectShape.type}>
-            </svg>`;
-
-        console.log('Creating SVG file', data);
-        resolve();
-
-   
-
-        // Write the file
-        fs.writeFile('logo.svg', svgShapes, (err) => {
-            if (err) {
-                console.error('Could not create file', err);
-                reject(err);
-            }
-            else {
-                console.log('Success!');
-                resolve();
-            }
-        });
-    });    
-
-};
